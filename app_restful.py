@@ -1,17 +1,17 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
-from habilidades import Habilidades
+from habilidades import Habilidades, ListaHabilidades, lista_habilidades
 import json
 
 app = Flask(__name__)
 api = Api(app)
 
 desenvolvedores = [
-    {'id':'0',
+    {'id':0,
     'nome':'Rafael',
      'habilidades':['Python', 'Flask']
      },
-    {'id':'1',
+    {'id':1,
     'nome':'Galleani',
      'habilidades':['Python', 'Django']
      }
@@ -46,16 +46,25 @@ class ListaDesenvolvedores(Resource):
     
     def post(self):
         dados = json.loads(request.data)
-        posicao = len(desenvolvedores)
-        dados['id'] = posicao
-        desenvolvedores.append(dados)
-        return desenvolvedores[posicao]
+        dados_alter = dados["habilidades"]
+        ocorrencias_nao_encontradas = []
+        for ocorrencia in dados_alter:
+            if not any(ocorrencia in dicionario.values() for dicionario in lista_habilidades):
+                ocorrencias_nao_encontradas.append(ocorrencia)
         
+        if ocorrencias_nao_encontradas:    
+            return {'status':'falha', 'mensagem':'Habilidades {} não cadastradas!'.format(', '.join(ocorrencias_nao_encontradas))}
+        else:
+            posicao = len(desenvolvedores)
+            dados['id'] = posicao
+            desenvolvedores.append(dados)
+            return desenvolvedores[posicao]
         
 
 api.add_resource(Desenvolvedor, '/dev/<int:id>/')
 api.add_resource(ListaDesenvolvedores, '/dev/')
-api.add_resource(Habilidades, '/habilidades/')
+api.add_resource(Habilidades, '/habilidades/<int:id>/')
+api.add_resource(ListaHabilidades, '/habilidades/')
 
 if __name__ == '__main__':
     app.run(debug=True)
